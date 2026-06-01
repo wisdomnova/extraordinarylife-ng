@@ -41,6 +41,17 @@ export function formatDisplayDate(dateStr) {
   });
 }
 
+export function formatMemberSince(createdAt) {
+  if (!createdAt) return null;
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 export function getCalendarDates(startFromToday = true) {
   const dates = [];
   const start = new Date();

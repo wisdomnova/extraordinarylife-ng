@@ -1,4 +1,4 @@
-import { TERMS_AND_CONDITIONS, formatNaira, isConference, getSeatById, PRICES } from '../config.js';
+import { TERMS_AND_CONDITIONS, formatNaira, isConference, getSeatById, PRICES, VENUE } from '../config.js';
 import { renderFloorPlan } from '../floor-plan.js';
 import {
   getBookableDates,
@@ -46,6 +46,7 @@ export function renderBookView(user) {
           <button type="button" class="btn btn--primary btn--full" id="btn-confirm-book" disabled>
             Continue to payment
           </button>
+          ${renderVenueContact()}
         </aside>
         <div class="book-map card" id="floor-plan-container"></div>
       </div>
@@ -154,6 +155,23 @@ export function bindBookView(root, user, refresh) {
     }
     showTermsAndPay(user, selectedSeatId, dateStr, sessionType, refresh);
   });
+}
+
+function renderVenueContact() {
+  const address = VENUE.addressLines.join('<br />');
+  return `
+    <div class="venue-contact">
+      <h4 class="venue-contact__title">Visit us</h4>
+      <p class="venue-contact__row">
+        <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+        <span>${address}</span>
+      </p>
+      <p class="venue-contact__row">
+        <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+        <a href="tel:${VENUE.phoneTel}">${VENUE.phone}</a>
+      </p>
+    </div>
+  `;
 }
 
 function renderCheckoutPricing(listPrice) {

@@ -7,6 +7,12 @@ export const BRAND = {
   navy: '#0A1931',
 };
 
+export const VENUE = {
+  addressLines: ['12 Ebitu Ukiwe Street', 'Jabi', 'Abuja'],
+  phone: '+234 816 523 5161',
+  phoneTel: '+2348165235161',
+};
+
 export const PRICES = {
   desk: 10000,
   conferenceHalf: 25000,

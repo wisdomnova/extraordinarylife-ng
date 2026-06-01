@@ -58,6 +58,50 @@
   color: var(--color-danger);
 }
 
+.venue-contact {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.venue-contact__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 12px;
+}
+
+.venue-contact__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.venue-contact__row:last-child {
+  margin-bottom: 0;
+}
+
+.venue-contact__row ion-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 18px;
+  color: var(--color-primary);
+}
+
+.venue-contact__row a {
+  color: var(--color-navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.venue-contact__row a:hover {
+  color: var(--color-primary);
+}
+
 .confirm-booking__meta {
   font-size: 0.95rem;
   color: var(--color-navy);

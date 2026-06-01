@@ -149,6 +149,27 @@ function registerForm() {
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
+function setAuthFormBusy(form, submitBtn, busy, busyLabel) {
+  if (!form || !submitBtn) return;
+
+  submitBtn.disabled = busy;
+  submitBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+
+  if (busy) {
+    if (!submitBtn.dataset.defaultHtml) {
+      submitBtn.dataset.defaultHtml = submitBtn.innerHTML;
+    }
+    submitBtn.innerHTML = `<span class="spinner-inline"></span> ${busyLabel}`;
+  } else if (submitBtn.dataset.defaultHtml) {
+    submitBtn.innerHTML = submitBtn.dataset.defaultHtml;
+  }
+
+  form.querySelectorAll('input, button, select, textarea').forEach((el) => {
+    if (el === submitBtn) return;
+    el.disabled = busy;
+  });
+}
+
 function bindPasswordToggles(container) {
   container.querySelectorAll('.password-field__toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -240,16 +261,19 @@ function bindForm(container, tab, onSuccess) {
   if (tab === 'login') {
     container.querySelector('#login-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = container.querySelector('#login-email').value;
-      const password = container.querySelector('#login-password').value;
-      const submitBtn = e.target.querySelector('[type="submit"]');
-      submitBtn.disabled = true;
+      const form = e.target;
+      const email = form.querySelector('#login-email').value;
+      const password = form.querySelector('#login-password').value;
+      const submitBtn = form.querySelector('[type="submit"]');
+      setAuthFormBusy(form, submitBtn, true, 'Signing in…');
       const res = await login(email, password);
-      submitBtn.disabled = false;
       if (res.ok) {
         toast('Welcome back!', 'success');
         onSuccess();
-      } else toast(res.error, 'error');
+        return;
+      }
+      setAuthFormBusy(form, submitBtn, false);
+      toast(res.error, 'error');
     });
     return;
   }
@@ -278,19 +302,25 @@ function bindForm(container, tab, onSuccess) {
 
   container.querySelector('#register-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.target;
+    setAuthFormBusy(form, submit, true, 'Creating account…');
     const res = await register({
-      fullName: container.querySelector('#reg-name').value,
-      email: container.querySelector('#reg-email').value,
-      phone: container.querySelector('#reg-phone').value,
-      organisation: container.querySelector('#reg-org').value,
-      password: container.querySelector('#reg-password').value,
-      photoFile: container.querySelector('#reg-photo').files[0] || null,
+      fullName: form.querySelector('#reg-name').value,
+      email: form.querySelector('#reg-email').value,
+      phone: form.querySelector('#reg-phone').value,
+      organisation: form.querySelector('#reg-org').value,
+      password: form.querySelector('#reg-password').value,
+      photoFile: form.querySelector('#reg-photo').files[0] || null,
       consent: consent.checked,
       termsAccepted: terms.checked,
     });
     if (res.ok) {
       toast('Account created!', 'success');
       onSuccess();
-    } else toast(res.error, 'error');
+      return;
+    }
+    setAuthFormBusy(form, submit, false);
+    updateSubmit();
+    toast(res.error, 'error');
   });
 }

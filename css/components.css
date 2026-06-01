@@ -91,6 +91,10 @@
   transform: none;
 }
 
+.btn[aria-busy='true'] {
+  pointer-events: none;
+}
+
 .btn--ghost {
   background: transparent;
   color: var(--color-text-muted);

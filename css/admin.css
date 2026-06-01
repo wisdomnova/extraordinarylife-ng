@@ -1,0 +1,243 @@
+/* Admin dashboard */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.metric-card ion-icon {
+  font-size: 28px;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
+.metric-card__value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  letter-spacing: -0.02em;
+}
+
+.metric-card__label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-section {
+  margin-bottom: 24px;
+}
+
+.admin-section h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--color-navy);
+}
+
+.maintenance-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.maintenance-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.maintenance-chip:has(input:checked) {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+}
+
+.maintenance-chip input {
+  accent-color: var(--color-primary);
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.user-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.user-card__photo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-card__photo--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-text-subtle);
+}
+
+.user-card strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.user-card p {
+  font-size: 0.75rem;
+  margin: 2px 0;
+}
+
+.user-card .badge {
+  margin-top: 8px;
+}
+
+/* Scanner */
+.scanner-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.scanner-video-wrap {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  aspect-ratio: 4/3;
+  background: #000;
+}
+
+.scanner-video-wrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-overlay {
+  position: absolute;
+  inset: 20%;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+}
+
+.scanner-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.scanner-result {
+  min-height: 320px;
+}
+
+.scan-details__photo {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+.scan-details h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.scan-details__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.scan-details__grid > div {
+  padding: 10px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.scan-details__grid span {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.scanner-error {
+  color: var(--color-danger);
+  text-align: center;
+  padding: 24px;
+}
+
+.barcode-lookup-row {
+  display: flex;
+  gap: 8px;
+}
+
+.barcode-lookup-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: inherit;
+}
+
+@media (max-width: 900px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-grid,
+  .scanner-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

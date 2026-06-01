@@ -1,0 +1,9 @@
+{
+  "name": "extraordinarylife",
+  "version": "1.0.0",
+  "description": "Extraordinary Life co-working seat booking prototype",
+  "scripts": {
+    "start": "npx serve . -p 3456",
+    "dev": "npx serve . -p 3456"
+  }
+}

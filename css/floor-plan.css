@@ -1,0 +1,284 @@
+/* Interactive floor plan spatial layout */
+.floor-plan {
+  width: 100%;
+}
+
+.floor-plan__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.floor-plan__legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot--available { background: var(--color-available); }
+.dot--booked { background: var(--color-booked); }
+.dot--yours { background: var(--color-primary); }
+.dot--maintenance { background: var(--color-maintenance); }
+
+.floor-plan__room {
+  background: #f0f2f6;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.floor-plan__top {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.floor-plan__walkway--v {
+  background: var(--color-bg);
+  border-left: 2px dashed var(--color-border-strong);
+  border-right: 2px dashed var(--color-border-strong);
+  border-radius: 4px;
+  min-height: 120px;
+}
+
+.floor-plan__middle {
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px;
+  gap: 20px;
+  flex: 1;
+  align-items: start;
+}
+
+.floor-plan__left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.floor-plan__center {
+  display: flex;
+  justify-content: center;
+}
+
+.floor-plan__bottom {
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
+  gap: 12px;
+  align-items: end;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 2px dashed var(--color-border-strong);
+}
+
+.floor-plan__open-space {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-subtle);
+  font-size: 0.85rem;
+  text-align: center;
+  min-height: 80px;
+}
+
+.floor-plan__open-space small {
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+.floor-plan__right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.cluster {
+  display: grid;
+  gap: 8px;
+}
+
+.cluster--2x2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Seats */
+.seat {
+  width: 72px;
+  height: 64px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 700;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.seat--wide {
+  width: 156px;
+  height: 56px;
+}
+
+.seat__num {
+  font-size: 1.1rem;
+  color: var(--color-navy);
+}
+
+.seat__status {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.seat--available {
+  border-color: var(--color-available);
+}
+.seat--available .seat__status { color: var(--color-available); }
+
+.seat--booked {
+  background: #fef2f2;
+  border-color: var(--color-booked);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.seat--booked .seat__status { color: var(--color-booked); }
+
+.seat--yours {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.seat--yours .seat__status { color: var(--color-primary); }
+
+.seat--maintenance {
+  background: #f1f3f5;
+  border-color: var(--color-maintenance);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.seat--selected {
+  box-shadow: var(--shadow-glow);
+  border-color: var(--color-primary) !important;
+  transform: scale(1.05);
+}
+
+.seat:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.seat:disabled {
+  cursor: not-allowed;
+}
+
+/* Room blocks */
+.room-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.room-block ion-icon {
+  font-size: 20px;
+}
+
+.room-block--conference {
+  min-height: 140px;
+  background: var(--color-navy);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.room-block--conference .room-block__price {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.room-block--conference:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+.room-block--conference.room-block--selected {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.room-block--conference.room-block--booked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.room-block--kitchen,
+.room-block--restroom {
+  background: #eef1f5;
+  min-height: 56px;
+}
+
+.room-block--entrance {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  min-height: 64px;
+}
+
+@media (max-width: 900px) {
+  .floor-plan__top {
+    grid-template-columns: 1fr;
+  }
+  .floor-plan__walkway--v {
+    display: none;
+  }
+  .floor-plan__middle {
+    grid-template-columns: 1fr;
+  }
+  .floor-plan__right-column {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .room-block--conference {
+    min-height: 100px;
+    flex: 1;
+  }
+  .floor-plan__bottom {
+    grid-template-columns: 1fr;
+  }
+}

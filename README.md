@@ -20,11 +20,9 @@ npm start
 
 Open http://localhost:3456
 
-Set the API URL in `index.html` if needed:
+Production API: `https://extraordinarylife-backend-production.up.railway.app`
 
-```html
-<script>window.EL_API_URL = 'http://localhost:4000';</script>
-```
+`index.html` uses localhost when developing locally, otherwise the Railway URL above.
 
 ## Admin login
 

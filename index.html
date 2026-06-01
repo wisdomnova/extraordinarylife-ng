@@ -30,7 +30,12 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script>window.EL_API_URL = 'http://localhost:4000';</script>
+  <script>
+    window.EL_API_URL =
+      location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+        ? 'http://localhost:4000'
+        : 'https://extraordinarylife-backend-production.up.railway.app';
+  </script>
   <script>
     (function () {
       var shown = false;

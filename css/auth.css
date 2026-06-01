@@ -178,15 +178,6 @@ body.auth-active #app {
   box-shadow: var(--shadow-sm);
 }
 
-.auth-demo-hint {
-  flex-shrink: 0;
-  margin-top: 16px;
-  font-size: 0.75rem;
-  color: var(--color-text-subtle);
-  text-align: center;
-  max-width: 500px;
-}
-
 /* Password show/hide */
 .password-field {
   position: relative;
@@ -237,13 +228,6 @@ body.auth-active #app {
 .password-field__toggle ion-icon {
   font-size: 20px;
   pointer-events: none;
-}
-
-.auth-demo-hint code {
-  background: var(--color-surface);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
 }
 
 .form-group__label {
@@ -402,10 +386,5 @@ body.auth-active #app {
 
   .auth-card--scrollable .auth-form-scroll {
     max-height: calc(100dvh - 240px);
-  }
-
-  .auth-demo-hint {
-    max-width: 100%;
-    margin-top: 12px;
   }
 }

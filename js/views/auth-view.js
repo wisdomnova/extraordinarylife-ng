@@ -27,9 +27,6 @@ export function renderAuthView(onSuccess) {
           </div>
           <div id="auth-form-container" class="auth-form-scroll"></div>
         </div>
-        <p class="auth-demo-hint">
-          Demo: <code>admin@extraordinarylife.ng</code> / <code>admin123</code>
-        </p>
       </div>
     </div>
   `;

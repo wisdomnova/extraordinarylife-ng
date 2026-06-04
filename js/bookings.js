@@ -16,11 +16,12 @@ import {
   isJune2026,
   monthKey,
   getCalendarDates,
+  isSunday,
 } from './utils.js';
 
 export function getBookableDates() {
   const cached = getCacheBookableDates();
-  return cached.length ? cached : getCalendarDates(true);
+  return cached.length ? cached : getCalendarDates();
 }
 
 export function getUserDeskBookingOnDate(userId, dateStr) {
@@ -86,7 +87,9 @@ export function validateBooking(userId, seatId, dateStr, sessionType = null) {
   }
 
   const bookable = getBookableDates();
-  if (!bookable.includes(dateStr)) {
+  if (isSunday(dateStr)) {
+    errors.push('Bookings are not available on Sundays.');
+  } else if (!bookable.includes(dateStr)) {
     errors.push('Selected date is outside the 90-day booking window.');
   }
 

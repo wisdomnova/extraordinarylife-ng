@@ -52,19 +52,20 @@ export function formatMemberSince(createdAt) {
   });
 }
 
-export function getCalendarDates(startFromToday = true) {
-  const dates = [];
-  const start = new Date();
-  if (!startFromToday) start.setDate(start.getDate() + 1);
-  else start.setDate(start.getDate() + 1); // min 1 day advance = start from tomorrow for booking
+export function isSunday(dateStr) {
+  return parseDateISO(dateStr).getDay() === 0;
+}
 
+export function getCalendarDates() {
+  const dates = [];
   const minBookable = new Date();
   minBookable.setDate(minBookable.getDate() + 1);
 
   for (let i = 0; i < 90; i++) {
     const d = new Date(minBookable);
     d.setDate(minBookable.getDate() + i);
-    dates.push(formatDateISO(d));
+    const iso = formatDateISO(d);
+    if (!isSunday(iso)) dates.push(iso);
   }
   return dates;
 }

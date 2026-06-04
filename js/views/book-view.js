@@ -24,7 +24,7 @@ export function renderBookView(user) {
       <div class="page-header">
         <div>
           <h1>Book a workspace</h1>
-          <p class="page-subtitle">Select a date, then click a seat on the floor plan</p>
+          <p class="page-subtitle">Select a date (Mon–Sat), then click a seat on the floor plan</p>
         </div>
         <div class="june-badge ${juneUsed >= BOOKING_RULES.juneMaxDays ? 'june-badge--full' : ''}">
           <ion-icon name="calendar"></ion-icon>

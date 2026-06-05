@@ -64,7 +64,7 @@ export function renderBookView(user) {
             <p class="text-muted">Click a seat on the map to continue</p>
           </div>
           <button type="button" class="btn btn--primary btn--full" id="btn-confirm-book" disabled>
-            Continue to payment
+            Continue to booking
           </button>
           ${renderVenueContact()}
         </aside>

@@ -7,7 +7,7 @@ import {
 } from '../bookings.js';
 import { getMaintenanceSeats, getCacheMembers } from '../storage.js';
 import { getSeatById } from '../config.js';
-import { formatDisplayDate } from '../utils.js';
+import { formatDisplayDate, formatTimeRange } from '../utils.js';
 import { updateMaintenanceSeats, lookupBooking, checkInBooking } from '../data.js';
 import { startScanner, stopScanner } from '../components/scanner.js';
 import { toast } from '../components/toast.js';
@@ -101,7 +101,7 @@ export function renderAdminDashboard() {
           <table class="table">
             <thead>
               <tr>
-                <th>Member</th><th>Date</th><th>Seat</th><th>Amount</th>
+                <th>Member</th><th>Date</th><th>Time</th><th>Seat</th><th>Amount</th>
                 <th>Payment</th><th>Check-in</th><th>Barcode</th>
               </tr>
             </thead>
@@ -113,6 +113,7 @@ export function renderAdminDashboard() {
                   return `<tr>
                     <td>${u?.fullName || 'n/a'}</td>
                     <td>${formatDisplayDate(b.date)}</td>
+                    <td>${formatTimeRange(b.startTime, b.endTime) || '—'}</td>
                     <td>${seat?.label || b.seatId}</td>
                     <td>${formatNaira(b.amount ?? b.amountPaid ?? 0)}</td>
                     <td><span class="badge badge--${b.paymentStatus === 'paid' ? 'success' : 'muted'}">${b.paymentStatus}</span></td>
@@ -218,6 +219,7 @@ export function bindScannerView(root, refresh) {
         <div class="scan-details__grid">
           <div><span>Seat</span><strong>${seat?.label}</strong></div>
           <div><span>Date</span><strong>${formatDisplayDate(booking.date)}</strong></div>
+          <div><span>Time</span><strong>${formatTimeRange(booking.startTime, booking.endTime) || '—'}</strong></div>
           <div><span>Payment</span><strong class="badge badge--success">${booking.paymentStatus}</strong></div>
           <div><span>Check-in</span><strong>${booking.checkedIn ? 'Done' : 'Pending'}</strong></div>
           <div><span>Code</span><strong>${booking.accessCode}</strong></div>

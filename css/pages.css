@@ -13,6 +13,11 @@
   color: var(--color-navy);
 }
 
+.book-hours-hint {
+  font-size: 0.75rem;
+  margin: -8px 0 12px;
+}
+
 .book-map {
   padding: 20px;
   overflow-x: auto;

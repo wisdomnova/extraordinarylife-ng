@@ -41,6 +41,38 @@ export function formatDisplayDate(dateStr) {
   });
 }
 
+export function formatTime12(time24) {
+  if (!time24) return '';
+  const [hStr, mStr] = time24.split(':');
+  let h = Number(hStr);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${mStr} ${suffix}`;
+}
+
+export function formatTimeRange(startTime, endTime) {
+  if (!startTime || !endTime) return '';
+  return `${formatTime12(startTime)} – ${formatTime12(endTime)}`;
+}
+
+export function validateBookingTimes(startTime, endTime) {
+  const errors = [];
+  const open = '09:00';
+  const close = '17:00';
+  if (!startTime || !endTime) {
+    errors.push('Please select a start and end time.');
+    return errors;
+  }
+  if (startTime >= endTime) {
+    errors.push('End time must be after start time.');
+  }
+  if (startTime < open || endTime > close) {
+    errors.push('Bookings are available 9:00 AM – 5:00 PM only.');
+  }
+  return errors;
+}
+
 export function formatMemberSince(createdAt) {
   if (!createdAt) return null;
   const d = new Date(createdAt);

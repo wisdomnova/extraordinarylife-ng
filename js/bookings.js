@@ -17,6 +17,7 @@ import {
   monthKey,
   getCalendarDates,
   isSunday,
+  validateBookingTimes,
 } from './utils.js';
 
 export function getBookableDates() {
@@ -78,8 +79,16 @@ export function getSeatStatus(seatId, dateStr, userId) {
   return 'available';
 }
 
-export function validateBooking(userId, seatId, dateStr, sessionType = null) {
+export function validateBooking(
+  userId,
+  seatId,
+  dateStr,
+  sessionType = null,
+  startTime = null,
+  endTime = null
+) {
   const errors = [];
+  errors.push(...validateBookingTimes(startTime, endTime));
 
   const minDate = addDays(todayISO(), BOOKING_RULES.minAdvanceDays);
   if (dateStr < minDate) {

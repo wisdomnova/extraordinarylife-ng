@@ -13,6 +13,27 @@ export const VENUE = {
   phoneTel: '+2348165235161',
 };
 
+export const VENUE_HOURS = {
+  open: '09:00',
+  close: '17:00',
+};
+
+/** Hourly slots from open through close (e.g. 09:00 … 17:00). */
+export function getHourlyTimeSlots() {
+  const slots = [];
+  const [openH] = VENUE_HOURS.open.split(':').map(Number);
+  const [closeH] = VENUE_HOURS.close.split(':').map(Number);
+  for (let h = openH; h <= closeH; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`);
+  }
+  return slots;
+}
+
+export function getConferenceTimes(sessionType) {
+  if (sessionType === 'full') return { startTime: '09:00', endTime: '17:00' };
+  return { startTime: '09:00', endTime: '13:00' };
+}
+
 export const PRICES = {
   desk: 10000,
   conferenceHalf: 25000,

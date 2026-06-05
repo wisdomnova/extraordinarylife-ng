@@ -1,4 +1,13 @@
-import { TERMS_AND_CONDITIONS, formatNaira, isConference, getSeatById, PRICES, VENUE } from '../config.js';
+import {
+  TERMS_AND_CONDITIONS,
+  formatNaira,
+  isConference,
+  getSeatById,
+  PRICES,
+  VENUE,
+  getHourlyTimeSlots,
+  getConferenceTimes,
+} from '../config.js';
 import { renderFloorPlan } from '../floor-plan.js';
 import {
   getBookableDates,
@@ -8,7 +17,7 @@ import {
 } from '../bookings.js';
 import { loadAvailability, createBooking } from '../data.js';
 import { completeFreeCheckout } from '../payment.js';
-import { formatDisplayDate } from '../utils.js';
+import { formatDisplayDate, formatTime12, formatTimeRange } from '../utils.js';
 import { openModal } from '../components/modal.js';
 import { renderSelectField, renderSelectInline } from '../components/select-field.js';
 import { toast } from '../components/toast.js';
@@ -24,7 +33,7 @@ export function renderBookView(user) {
       <div class="page-header">
         <div>
           <h1>Book a workspace</h1>
-          <p class="page-subtitle">Select a date (Mon–Sat), then click a seat on the floor plan</p>
+          <p class="page-subtitle">Select a date and time (9am–5pm, Mon–Sat), then click a seat</p>
         </div>
         <div class="june-badge ${juneUsed >= BOOKING_RULES.juneMaxDays ? 'june-badge--full' : ''}">
           <ion-icon name="calendar"></ion-icon>
@@ -40,6 +49,17 @@ export function renderBookView(user) {
             label: 'Date',
             optionsHtml: dates.map((d) => `<option value="${d}">${formatDisplayDate(d)}</option>`).join(''),
           })}
+          ${renderSelectField({
+            id: 'book-start',
+            label: 'Start time',
+            optionsHtml: buildStartTimeOptions('09:00'),
+          })}
+          ${renderSelectField({
+            id: 'book-end',
+            label: 'End time',
+            optionsHtml: buildEndTimeOptions('09:00', '17:00'),
+          })}
+          <p class="book-hours-hint text-muted">Open 9:00 AM – 5:00 PM</p>
           <div class="booking-summary" id="booking-summary">
             <p class="text-muted">Click a seat on the map to continue</p>
           </div>
@@ -58,11 +78,53 @@ export function bindBookView(root, user, refresh) {
   let selectedSeatId = null;
   let sessionType = 'half';
   const dateSelect = root.querySelector('#book-date');
+  const startSelect = root.querySelector('#book-start');
+  const endSelect = root.querySelector('#book-end');
   const summary = root.querySelector('#booking-summary');
   const confirmBtn = root.querySelector('#btn-confirm-book');
   const mapContainer = root.querySelector('#floor-plan-container');
 
   const getDate = () => dateSelect.value;
+  const getStartTime = () => startSelect?.value || '09:00';
+  const getEndTime = () => endSelect?.value || '17:00';
+
+  const syncEndTimeOptions = () => {
+    if (!startSelect || !endSelect) return;
+    const start = getStartTime();
+    const prevEnd = endSelect.value;
+    const ends = getEndTimeSlots(start);
+    endSelect.innerHTML = buildEndTimeOptions(start, ends.includes(prevEnd) ? prevEnd : ends.at(-1));
+    endSelect.disabled = false;
+  };
+
+  const setDeskTimeMode = () => {
+    if (!startSelect || !endSelect) return;
+    startSelect.disabled = false;
+    endSelect.disabled = false;
+    syncEndTimeOptions();
+  };
+
+  const setConferenceTimeMode = () => {
+    const { startTime, endTime } = getConferenceTimes(sessionType);
+    if (startSelect) {
+      startSelect.innerHTML = buildStartTimeOptions(startTime);
+      startSelect.value = startTime;
+      startSelect.disabled = true;
+    }
+    if (endSelect) {
+      endSelect.innerHTML = buildEndTimeOptions(startTime, endTime);
+      endSelect.value = endTime;
+      endSelect.disabled = true;
+    }
+  };
+
+  startSelect?.addEventListener('change', () => {
+    syncEndTimeOptions();
+    if (selectedSeatId && !isConference(selectedSeatId)) updateSummary();
+  });
+  endSelect?.addEventListener('change', () => {
+    if (selectedSeatId && !isConference(selectedSeatId)) updateSummary();
+  });
 
   const updateMap = async () => {
     selectedSeatId = null;
@@ -111,9 +173,13 @@ export function bindBookView(root, user, refresh) {
     const conf = isConference(selectedSeatId);
     const price = calculatePrice(selectedSeatId, sessionType);
 
+    if (conf) setConferenceTimeMode();
+    else setDeskTimeMode();
+
     summary.innerHTML = `
       <div class="summary-row"><span>Seat</span><strong>${seat?.label || selectedSeatId}</strong></div>
       <div class="summary-row"><span>Date</span><strong>${formatDisplayDate(getDate())}</strong></div>
+      <div class="summary-row"><span>Time</span><strong>${formatTimeRange(getStartTime(), getEndTime())}</strong></div>
       ${
         conf
           ? `
@@ -136,6 +202,7 @@ export function bindBookView(root, user, refresh) {
 
     summary.querySelector('#session-type')?.addEventListener('change', (e) => {
       sessionType = e.target.value;
+      if (conf) setConferenceTimeMode();
       updateSummary();
     });
 
@@ -148,12 +215,19 @@ export function bindBookView(root, user, refresh) {
   confirmBtn.addEventListener('click', () => {
     if (!selectedSeatId) return;
     const dateStr = getDate();
-    const validation = validateBooking(user.id, selectedSeatId, dateStr, sessionType);
+    const validation = validateBooking(
+      user.id,
+      selectedSeatId,
+      dateStr,
+      sessionType,
+      getStartTime(),
+      getEndTime()
+    );
     if (!validation.ok) {
       toast(validation.errors[0], 'error');
       return;
     }
-    showTermsAndPay(user, selectedSeatId, dateStr, sessionType, refresh);
+    showTermsAndPay(user, selectedSeatId, dateStr, sessionType, getStartTime(), getEndTime(), refresh);
   });
 }
 
@@ -198,7 +272,29 @@ function renderCheckoutPricing(listPrice) {
   `;
 }
 
-function showTermsAndPay(user, seatId, dateStr, sessionType, refresh) {
+function getStartTimeSlots() {
+  return getHourlyTimeSlots().slice(0, -1);
+}
+
+function getEndTimeSlots(startTime) {
+  return getHourlyTimeSlots().filter((t) => t > startTime);
+}
+
+function buildStartTimeOptions(selected) {
+  return getStartTimeSlots()
+    .map((t) => `<option value="${t}" ${t === selected ? 'selected' : ''}>${formatTime12(t)}</option>`)
+    .join('');
+}
+
+function buildEndTimeOptions(startTime, selected) {
+  const ends = getEndTimeSlots(startTime);
+  const value = ends.includes(selected) ? selected : ends.at(-1);
+  return ends
+    .map((t) => `<option value="${t}" ${t === value ? 'selected' : ''}>${formatTime12(t)}</option>`)
+    .join('');
+}
+
+function showTermsAndPay(user, seatId, dateStr, sessionType, startTime, endTime, refresh) {
   const listPrice = calculatePrice(seatId, sessionType);
   const seat = getSeatById(seatId);
 
@@ -207,7 +303,7 @@ function showTermsAndPay(user, seatId, dateStr, sessionType, refresh) {
     wide: true,
     bodyHtml: `
       <div class="confirm-booking">
-        <p class="confirm-booking__meta"><strong>${seat?.label}</strong>, ${formatDisplayDate(dateStr)}</p>
+        <p class="confirm-booking__meta"><strong>${seat?.label}</strong>, ${formatDisplayDate(dateStr)}<br />${formatTimeRange(startTime, endTime)}</p>
         ${renderCheckoutPricing(listPrice)}
         <div class="terms-content terms-content--compact">${TERMS_AND_CONDITIONS}</div>
         <label class="checkbox">
@@ -244,6 +340,8 @@ function showTermsAndPay(user, seatId, dateStr, sessionType, refresh) {
         seatId,
         date: dateStr,
         sessionType: isConference(seatId) ? sessionType : 'full',
+        startTime,
+        endTime,
         termsAccepted: true,
       });
       close();

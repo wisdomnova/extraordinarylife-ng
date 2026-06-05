@@ -1,7 +1,13 @@
 import { formatNaira, getSeatById } from '../config.js';
 import { getUserBookings } from '../bookings.js';
 import { renderBarcode } from '../barcode.js';
-import { formatDisplayDate, todayISO, getBookingListPrice, getBookingPaidAmount } from '../utils.js';
+import {
+  formatDisplayDate,
+  formatTimeRange,
+  todayISO,
+  getBookingListPrice,
+  getBookingPaidAmount,
+} from '../utils.js';
 
 export function renderVoucherView(user) {
   const bookings = getUserBookings(user.id).filter((b) => b.paymentStatus === 'paid');
@@ -41,7 +47,7 @@ function voucherCard(booking, idx) {
       <div class="voucher-card__header">
         <div>
           <h3>${seat?.label || booking.seatId}</h3>
-          <p>${formatDisplayDate(booking.date)}</p>
+          <p>${formatDisplayDate(booking.date)} · ${formatTimeRange(booking.startTime, booking.endTime) || '9:00 AM – 5:00 PM'}</p>
         </div>
         <span class="badge badge--${booking.checkedIn ? 'success' : 'primary'}">${booking.checkedIn ? 'Checked in' : 'Valid'}</span>
       </div>

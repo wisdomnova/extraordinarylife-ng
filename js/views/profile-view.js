@@ -3,6 +3,7 @@ import { getUserBookings, countUserJuneBookings } from '../bookings.js';
 import {
   formatDisplayDate,
   formatMemberSince,
+  formatTimeRange,
   getBookingListPrice,
   getBookingPaidAmount,
 } from '../utils.js';
@@ -95,7 +96,7 @@ export function renderProfileView(user) {
           bookings.length === 0
             ? '<p class="text-muted empty-state">No bookings yet. <a href="#" data-nav="book">Book your first desk</a></p>'
             : `<div class="table-wrap"><table class="table">
-          <thead><tr><th>Date</th><th>Seat</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Time</th><th>Seat</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
           <tbody>
             ${bookings
               .map((b) => {
@@ -103,6 +104,7 @@ export function renderProfileView(user) {
                 const isPast = b.date < new Date().toISOString().slice(0, 10);
                 return `<tr>
                   <td>${formatDisplayDate(b.date)}</td>
+                  <td>${formatTimeRange(b.startTime, b.endTime) || '9:00 AM – 5:00 PM'}</td>
                   <td>${seat?.label || b.seatId}</td>
                   <td>${formatBookingType(b)}</td>
                   <td>${formatBookingAmountCell(b)}</td>

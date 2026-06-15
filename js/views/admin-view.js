@@ -186,10 +186,13 @@ function renderMembersGrid(members) {
   }
   return `<div class="user-grid">
     ${members
-      .map(
-        (u) => `
+      .map((u) => {
+        const photo = u.photo
+          ? `<img src="${u.photo}" class="user-card__photo" alt="" loading="lazy" />`
+          : `<div class="user-card__photo user-card__photo--ph"><ion-icon name="person"></ion-icon></div>`;
+        return `
       <div class="user-card">
-        <div class="user-card__photo user-card__photo--ph"><ion-icon name="person"></ion-icon></div>
+        ${photo}
         <div>
           <strong>${u.fullName}</strong>
           <p class="text-muted">${u.email}</p>
@@ -197,8 +200,8 @@ function renderMembersGrid(members) {
           <p class="text-muted">${u.organisation || ''}</p>
           <span class="badge badge--primary">${u.bookingCount ?? 0} bookings</span>
         </div>
-      </div>`
-      )
+      </div>`;
+      })
       .join('')}
   </div>`;
 }

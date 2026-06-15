@@ -1,5 +1,5 @@
 import { getCurrentUser, logout, isAdmin } from './auth.js';
-import { syncFromApi } from './data.js';
+import { syncEssentials, syncFromApi } from './data.js';
 import { renderAuthView, bindAuthView } from './views/auth-view.js';
 import { renderShell } from './views/layout.js';
 import { renderBookView, bindBookView } from './views/book-view.js';
@@ -107,11 +107,12 @@ function render(forcedPage = null) {
 
 async function boot() {
   try {
-    await syncFromApi();
+    await syncEssentials();
     render();
     window.__EL_APP_READY__ = true;
     const err = document.getElementById('boot-error');
     if (err) err.hidden = true;
+    syncFromApi().catch((e) => console.warn('[Extraordinary Life] background sync:', e));
   } catch (e) {
     console.error('[Extraordinary Life] boot failed:', e);
     throw e;

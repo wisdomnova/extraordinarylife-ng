@@ -2,7 +2,7 @@
 
 import { api, setToken, clearToken } from './api/client.js';
 import { setCacheUser, getCacheUser, resetCache } from './storage.js';
-import { syncFromApi } from './data.js';
+import { syncEssentials } from './data.js';
 import { fileToBase64 } from './utils.js';
 
 export function getCurrentUser() {
@@ -17,7 +17,7 @@ export async function login(email, password) {
     });
     setToken(res.token);
     setCacheUser(res.user);
-    await syncFromApi();
+    await syncEssentials(res.user);
     return { ok: true, user: res.user };
   } catch (err) {
     return { ok: false, error: err.message || 'Login failed' };
@@ -61,7 +61,7 @@ export async function register(data) {
     });
     setToken(res.token);
     setCacheUser(res.user);
-    await syncFromApi();
+    await syncEssentials(res.user);
     return { ok: true, user: res.user };
   } catch (err) {
     return { ok: false, error: err.message || 'Registration failed' };

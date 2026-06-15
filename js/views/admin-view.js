@@ -1,11 +1,6 @@
 import { formatNaira, HOT_DESKS, CONFERENCE_ROOM, PROTECTED_BLOCKED_DATES } from '../config.js';
-import {
-  getAllBookings,
-  getTodayMetrics,
-  getJuneQuotaList,
-  findMemberById,
-} from '../bookings.js';
-import { getMaintenanceSeats, getCacheMembers, getCacheBlockedDates, getProtectedBlockedDates } from '../storage.js';
+import { getTodayMetrics } from '../bookings.js';
+import { getMaintenanceSeats, getCacheBlockedDates, getProtectedBlockedDates } from '../storage.js';
 import { getSeatById } from '../config.js';
 import { formatDisplayDate, formatTimeRange, addDays, todayISO } from '../utils.js';
 import {
@@ -14,15 +9,17 @@ import {
   removeBlockedDate,
   lookupBooking,
   checkInBooking,
+  fetchAdminBookings,
+  fetchAdminMembers,
+  fetchAdminJuneQuota,
+  syncFromApi,
 } from '../data.js';
+import { renderPagination, bindPagination } from '../components/pagination.js';
 import { startScanner, stopScanner } from '../components/scanner.js';
 import { toast } from '../components/toast.js';
 
 export function renderAdminDashboard() {
   const metrics = getTodayMetrics();
-  const bookings = getAllBookings();
-  const members = getCacheMembers();
-  const juneQuota = getJuneQuotaList();
   const maintenance = getMaintenanceSeats();
   const blockedDates = getCacheBlockedDates();
   const protectedBlocked = new Set([
@@ -88,21 +85,8 @@ export function renderAdminDashboard() {
 
         <div class="card admin-section">
           <h2>June 2026 quota tracker</h2>
-          <div class="table-wrap">
-            <table class="table table--compact">
-              <thead><tr><th>Member</th><th>Used</th><th>Remaining</th></tr></thead>
-              <tbody>
-                ${juneQuota
-                  .map(
-                    (q) => `<tr>
-                    <td>${q.name}</td>
-                    <td>${q.used}</td>
-                    <td><span class="badge ${q.used >= q.max ? 'badge--danger' : 'badge--primary'}">${q.max - q.used}</span></td>
-                  </tr>`
-                  )
-                  .join('')}
-              </tbody>
-            </table>
+          <div id="admin-quota-wrap">
+            <p class="text-muted admin-loading">Loading…</p>
           </div>
         </div>
       </div>
@@ -150,63 +134,183 @@ export function renderAdminDashboard() {
 
       <div class="card admin-section">
         <h2>All bookings</h2>
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Member</th><th>Date</th><th>Time</th><th>Seat</th><th>Amount</th>
-                <th>Payment</th><th>Check-in</th><th>Barcode</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${bookings
-                .map((b) => {
-                  const u = findMemberById(b.userId);
-                  const seat = getSeatById(b.seatId);
-                  return `<tr>
-                    <td>${u?.fullName || 'n/a'}</td>
-                    <td>${formatDisplayDate(b.date)}</td>
-                    <td>${formatTimeRange(b.startTime, b.endTime) || '—'}</td>
-                    <td>${seat?.label || b.seatId}</td>
-                    <td>${formatNaira(b.amount ?? b.amountPaid ?? 0)}</td>
-                    <td><span class="badge badge--${b.paymentStatus === 'paid' ? 'success' : 'muted'}">${b.paymentStatus}</span></td>
-                    <td><span class="badge badge--${b.checkedIn ? 'success' : 'muted'}">${b.checkedIn ? 'Yes' : 'No'}</span></td>
-                    <td class="mono">${b.barcodeRef || 'n/a'}</td>
-                  </tr>`;
-                })
-                .join('')}
-            </tbody>
-          </table>
+        <div id="admin-bookings-wrap">
+          <p class="text-muted admin-loading">Loading…</p>
         </div>
       </div>
 
       <div class="card admin-section">
         <h2>Registered members</h2>
-        <div class="user-grid">
-          ${members
-            .map((u) => {
-              const photo = u.photo
-                ? `<img src="${u.photo}" class="user-card__photo" alt="" />`
-                : `<div class="user-card__photo user-card__photo--ph"><ion-icon name="person"></ion-icon></div>`;
-              return `
-              <div class="user-card">
-                ${photo}
-                <div>
-                  <strong>${u.fullName}</strong>
-                  <p class="text-muted">${u.email}</p>
-                  <p class="text-muted">${u.phone}</p>
-                  <span class="badge badge--primary">${u.bookingCount ?? 0} bookings</span>
-                </div>
-              </div>`;
-            })
-            .join('')}
+        <div id="admin-members-wrap">
+          <p class="text-muted admin-loading">Loading…</p>
         </div>
       </div>
     </div>
   `;
 }
 
+function renderBookingsTable(bookings) {
+  if (!bookings.length) {
+    return '<p class="text-muted empty-state">No bookings yet.</p>';
+  }
+  return `<div class="table-wrap"><table class="table">
+    <thead>
+      <tr>
+        <th>Member</th><th>Date</th><th>Time</th><th>Seat</th><th>Amount</th>
+        <th>Payment</th><th>Check-in</th><th>Barcode</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${bookings
+        .map((b) => {
+          const seat = getSeatById(b.seatId);
+          return `<tr>
+            <td>${b.memberName || 'n/a'}</td>
+            <td>${formatDisplayDate(b.date)}</td>
+            <td>${formatTimeRange(b.startTime, b.endTime) || '—'}</td>
+            <td>${seat?.label || b.seatId}</td>
+            <td>${formatNaira(b.amount ?? b.amountPaid ?? 0)}</td>
+            <td><span class="badge badge--${b.paymentStatus === 'paid' ? 'success' : 'muted'}">${b.paymentStatus}</span></td>
+            <td><span class="badge badge--${b.checkedIn ? 'success' : 'muted'}">${b.checkedIn ? 'Yes' : 'No'}</span></td>
+            <td class="mono">${b.barcodeRef || 'n/a'}</td>
+          </tr>`;
+        })
+        .join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderMembersGrid(members) {
+  if (!members.length) {
+    return '<p class="text-muted empty-state">No members registered yet.</p>';
+  }
+  return `<div class="user-grid">
+    ${members
+      .map(
+        (u) => `
+      <div class="user-card">
+        <div class="user-card__photo user-card__photo--ph"><ion-icon name="person"></ion-icon></div>
+        <div>
+          <strong>${u.fullName}</strong>
+          <p class="text-muted">${u.email}</p>
+          <p class="text-muted">${u.phone}</p>
+          <p class="text-muted">${u.organisation || ''}</p>
+          <span class="badge badge--primary">${u.bookingCount ?? 0} bookings</span>
+        </div>
+      </div>`
+      )
+      .join('')}
+  </div>`;
+}
+
+function renderQuotaTable(quota) {
+  if (!quota.length) {
+    return '<p class="text-muted empty-state">No members yet.</p>';
+  }
+  return `<div class="table-wrap"><table class="table table--compact">
+    <thead><tr><th>Member</th><th>Used</th><th>Remaining</th></tr></thead>
+    <tbody>
+      ${quota
+        .map(
+          (q) => `<tr>
+          <td>${q.name}</td>
+          <td>${q.used}</td>
+          <td><span class="badge ${q.used >= q.max ? 'badge--danger' : 'badge--primary'}">${q.max - q.used}</span></td>
+        </tr>`
+        )
+        .join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function loadAdminBookingsPage(root, page) {
+  const wrap = root.querySelector('#admin-bookings-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p class="text-muted admin-loading">Loading…</p>';
+  try {
+    const data = await fetchAdminBookings(page);
+    wrap.innerHTML = `
+      ${renderBookingsTable(data.bookings)}
+      ${renderPagination({
+        id: 'admin-bookings-pagination',
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total,
+      })}
+    `;
+    const pag = wrap.querySelector('#admin-bookings-pagination');
+    bindPagination(pag, {
+      onPageChange: (p) => loadAdminBookingsPage(root, p),
+    });
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-muted">Could not load bookings. ${err.message || ''}</p>`;
+  }
+}
+
+async function loadAdminMembersPage(root, page) {
+  const wrap = root.querySelector('#admin-members-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p class="text-muted admin-loading">Loading…</p>';
+  try {
+    const data = await fetchAdminMembers(page);
+    wrap.innerHTML = `
+      ${renderMembersGrid(data.members)}
+      ${renderPagination({
+        id: 'admin-members-pagination',
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total,
+      })}
+    `;
+    const pag = wrap.querySelector('#admin-members-pagination');
+    bindPagination(pag, {
+      onPageChange: (p) => loadAdminMembersPage(root, p),
+    });
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-muted">Could not load members. ${err.message || ''}</p>`;
+  }
+}
+
+async function loadAdminQuotaPage(root, page) {
+  const wrap = root.querySelector('#admin-quota-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<p class="text-muted admin-loading">Loading…</p>';
+  try {
+    const data = await fetchAdminJuneQuota(page);
+    wrap.innerHTML = `
+      ${renderQuotaTable(data.quota)}
+      ${renderPagination({
+        id: 'admin-quota-pagination',
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total,
+      })}
+    `;
+    const pag = wrap.querySelector('#admin-quota-pagination');
+    bindPagination(pag, {
+      onPageChange: (p) => loadAdminQuotaPage(root, p),
+    });
+  } catch (err) {
+    wrap.innerHTML = `<p class="text-muted">Could not load quota. ${err.message || ''}</p>`;
+  }
+}
+
 export function bindAdminDashboard(root, refresh) {
+  syncFromApi()
+    .then(() => {
+      const m = getTodayMetrics();
+      const vals = root.querySelectorAll('.metric-card__value');
+      if (vals[0]) vals[0].textContent = m.bookingsToday;
+      if (vals[1]) vals[1].textContent = formatNaira(m.revenue);
+      if (vals[2]) vals[2].textContent = m.availableSeats;
+      if (vals[3]) vals[3].textContent = m.checkIns;
+    })
+    .catch(() => {});
+
+  loadAdminBookingsPage(root, 1);
+  loadAdminMembersPage(root, 1);
+  loadAdminQuotaPage(root, 1);
+
   root.querySelector('#save-maintenance')?.addEventListener('click', async () => {
     const checked = [...root.querySelectorAll('.maintenance-chip input:checked')].map(
       (i) => i.value

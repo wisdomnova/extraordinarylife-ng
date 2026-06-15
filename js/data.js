@@ -4,59 +4,79 @@ import { api, getToken, clearToken } from './api/client.js';
 import {
   resetCache,
   setCacheUser,
+  getCacheUser,
   setCacheBookings,
   setCacheMaintenance,
   setCacheBookableDates,
   setCacheBlockedDates,
   getProtectedBlockedDates,
   setCacheAvailability,
-  setCacheMembers,
   setCacheMetrics,
-  setCacheJuneQuota,
   upsertBooking,
   clearAvailabilityCache,
 } from './storage.js';
 
-export async function syncFromApi() {
+/** Minimal data needed to sign in and use the app quickly */
+export async function syncEssentials(userFromAuth = null) {
   if (!getToken()) {
     resetCache();
-    return;
+    return null;
   }
 
+  let user = userFromAuth || getCacheUser();
+  if (!user) {
+    const me = await api('/api/me');
+    user = me.user;
+  }
+  setCacheUser(user);
+
+  const tasks = [
+    api('/api/bookings/dates'),
+    api('/api/blocked-dates'),
+    api('/api/maintenance'),
+  ];
+  if (user.role !== 'admin') {
+    tasks.push(api('/api/bookings'));
+  }
+
+  const results = await Promise.all(tasks);
+  setCacheBookableDates(results[0].dates);
+  setCacheBlockedDates(results[1].dates, results[1].protected || []);
+  setCacheMaintenance(results[2].seats);
+  setCacheBookings(user.role === 'admin' ? [] : results[3].bookings);
+
+  return user;
+}
+
+export async function syncFromApi() {
   try {
-    const { user } = await api('/api/me');
-    setCacheUser(user);
-
-    const [bookingsRes, maintRes, datesRes, blockedRes] = await Promise.all([
-      api('/api/bookings'),
-      api('/api/maintenance'),
-      api('/api/bookings/dates'),
-      api('/api/blocked-dates'),
-    ]);
-
-    setCacheBookings(bookingsRes.bookings);
-    setCacheMaintenance(maintRes.seats);
-    setCacheBookableDates(datesRes.dates);
-    setCacheBlockedDates(blockedRes.dates, blockedRes.protected || []);
-
+    const user = await syncEssentials();
+    if (!user) return null;
     if (user.role === 'admin') {
-      const [metricsRes, membersRes, quotaRes] = await Promise.all([
-        api('/api/admin/metrics'),
-        api('/api/admin/members'),
-        api('/api/admin/june-quota'),
-      ]);
-      setCacheMetrics(metricsRes.metrics);
-      setCacheMembers(membersRes.members);
-      setCacheJuneQuota(quotaRes.quota);
+      const { metrics } = await api('/api/admin/metrics');
+      setCacheMetrics(metrics);
     }
+    return user;
   } catch (err) {
     if (err.status === 401) {
       clearToken();
       resetCache();
-      return;
+      return null;
     }
     throw err;
   }
+}
+
+export async function fetchAdminBookings(page = 1) {
+  return api(`/api/admin/bookings?page=${page}&limit=20`);
+}
+
+export async function fetchAdminMembers(page = 1) {
+  return api(`/api/admin/members?page=${page}&limit=12`);
+}
+
+export async function fetchAdminJuneQuota(page = 1) {
+  return api(`/api/admin/june-quota?page=${page}&limit=15`);
 }
 
 export async function loadAvailability(date) {

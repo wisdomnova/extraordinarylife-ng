@@ -7,6 +7,8 @@ import {
   setCacheBookings,
   setCacheMaintenance,
   setCacheBookableDates,
+  setCacheBlockedDates,
+  getCacheBlockedDates,
   setCacheAvailability,
   setCacheMembers,
   setCacheMetrics,
@@ -25,15 +27,17 @@ export async function syncFromApi() {
     const { user } = await api('/api/me');
     setCacheUser(user);
 
-    const [bookingsRes, maintRes, datesRes] = await Promise.all([
+    const [bookingsRes, maintRes, datesRes, blockedRes] = await Promise.all([
       api('/api/bookings'),
       api('/api/maintenance'),
       api('/api/bookings/dates'),
+      api('/api/blocked-dates'),
     ]);
 
     setCacheBookings(bookingsRes.bookings);
     setCacheMaintenance(maintRes.seats);
     setCacheBookableDates(datesRes.dates);
+    setCacheBlockedDates(blockedRes.dates);
 
     if (user.role === 'admin') {
       const [metricsRes, membersRes, quotaRes] = await Promise.all([
@@ -69,6 +73,33 @@ export async function createBooking(payload) {
   upsertBooking(res.booking);
   clearAvailabilityCache();
   return res.booking;
+}
+
+export async function refreshBookableDates() {
+  const { dates } = await api('/api/bookings/dates');
+  setCacheBookableDates(dates);
+  return dates;
+}
+
+export async function addBlockedDate(date) {
+  const res = await api('/api/blocked-dates', {
+    method: 'POST',
+    body: JSON.stringify({ date }),
+  });
+  setCacheBlockedDates(res.dates);
+  clearAvailabilityCache();
+  await refreshBookableDates();
+  return res.dates;
+}
+
+export async function removeBlockedDate(date) {
+  const res = await api(`/api/blocked-dates/${encodeURIComponent(date)}`, {
+    method: 'DELETE',
+  });
+  setCacheBlockedDates(res.dates);
+  clearAvailabilityCache();
+  await refreshBookableDates();
+  return res.dates;
 }
 
 export async function updateMaintenanceSeats(seats) {

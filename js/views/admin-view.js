@@ -5,10 +5,16 @@ import {
   getJuneQuotaList,
   findMemberById,
 } from '../bookings.js';
-import { getMaintenanceSeats, getCacheMembers } from '../storage.js';
+import { getMaintenanceSeats, getCacheMembers, getCacheBlockedDates } from '../storage.js';
 import { getSeatById } from '../config.js';
-import { formatDisplayDate, formatTimeRange } from '../utils.js';
-import { updateMaintenanceSeats, lookupBooking, checkInBooking } from '../data.js';
+import { formatDisplayDate, formatTimeRange, addDays, todayISO } from '../utils.js';
+import {
+  updateMaintenanceSeats,
+  addBlockedDate,
+  removeBlockedDate,
+  lookupBooking,
+  checkInBooking,
+} from '../data.js';
 import { startScanner, stopScanner } from '../components/scanner.js';
 import { toast } from '../components/toast.js';
 
@@ -18,6 +24,8 @@ export function renderAdminDashboard() {
   const members = getCacheMembers();
   const juneQuota = getJuneQuotaList();
   const maintenance = getMaintenanceSeats();
+  const blockedDates = getCacheBlockedDates();
+  const minBlockDate = addDays(todayISO(), 1);
 
   return `
     <div class="page admin-page">
@@ -96,6 +104,43 @@ export function renderAdminDashboard() {
       </div>
 
       <div class="card admin-section">
+        <h2>Block booking dates</h2>
+        <p class="admin-section__hint text-muted">
+          Closed days are hidden from the member booking calendar. Sundays are already excluded.
+        </p>
+        <form class="blocked-dates-form" id="blocked-dates-form">
+          <div class="form-group blocked-dates-form__field">
+            <label for="blocked-date-input">Date to block</label>
+            <input
+              type="date"
+              id="blocked-date-input"
+              class="blocked-dates-form__input"
+              min="${minBlockDate}"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn--primary btn--sm">Block date</button>
+        </form>
+        ${
+          blockedDates.length
+            ? `<ul class="blocked-dates-list" id="blocked-dates-list">
+            ${blockedDates
+              .map(
+                (d) => `
+              <li class="blocked-dates-list__item">
+                <span>${formatDisplayDate(d)}</span>
+                <button type="button" class="btn btn--ghost btn--sm" data-unblock="${d}" aria-label="Unblock ${formatDisplayDate(d)}">
+                  <ion-icon name="close-outline"></ion-icon> Remove
+                </button>
+              </li>`
+              )
+              .join('')}
+          </ul>`
+            : '<p class="text-muted blocked-dates-empty">No blocked dates. Add a date above to close it for bookings.</p>'
+        }
+      </div>
+
+      <div class="card admin-section">
         <h2>All bookings</h2>
         <div class="table-wrap">
           <table class="table">
@@ -153,7 +198,7 @@ export function renderAdminDashboard() {
   `;
 }
 
-export function bindAdminDashboard(root) {
+export function bindAdminDashboard(root, refresh) {
   root.querySelector('#save-maintenance')?.addEventListener('click', async () => {
     const checked = [...root.querySelectorAll('.maintenance-chip input:checked')].map(
       (i) => i.value
@@ -164,6 +209,40 @@ export function bindAdminDashboard(root) {
     } catch (err) {
       toast(err.message || 'Failed to update maintenance', 'error');
     }
+  });
+
+  root.querySelector('#blocked-dates-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = root.querySelector('#blocked-date-input');
+    const date = input?.value;
+    if (!date) return;
+    const btn = e.target.querySelector('[type="submit"]');
+    btn.disabled = true;
+    try {
+      await addBlockedDate(date);
+      toast('Date blocked for bookings', 'success');
+      input.value = '';
+      refresh('admin');
+    } catch (err) {
+      toast(err.message || 'Failed to block date', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  root.querySelectorAll('[data-unblock]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const date = btn.dataset.unblock;
+      btn.disabled = true;
+      try {
+        await removeBlockedDate(date);
+        toast('Date unblocked', 'success');
+        refresh('admin');
+      } catch (err) {
+        toast(err.message || 'Failed to unblock date', 'error');
+        btn.disabled = false;
+      }
+    });
   });
 }
 

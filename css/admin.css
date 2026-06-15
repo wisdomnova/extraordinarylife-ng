@@ -81,6 +81,59 @@
   accent-color: var(--color-primary);
 }
 
+.admin-section__hint {
+  font-size: 0.85rem;
+  margin: -8px 0 16px;
+  line-height: 1.5;
+}
+
+.blocked-dates-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.blocked-dates-form__field {
+  flex: 1 1 200px;
+  margin-bottom: 0;
+}
+
+.blocked-dates-form__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.blocked-dates-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blocked-dates-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.blocked-dates-empty {
+  font-size: 0.875rem;
+}
+
 .user-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

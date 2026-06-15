@@ -5,6 +5,7 @@ import {
   getCacheBookings,
   getMaintenanceSeats,
   getCacheBookableDates,
+  getCacheBlockedDates,
   getCacheAvailability,
   getCacheMetrics,
   getCacheJuneQuota,
@@ -17,13 +18,16 @@ import {
   monthKey,
   getCalendarDates,
   isSunday,
-  isBlockedDate,
   validateBookingTimes,
 } from './utils.js';
 
+function isBlockedDate(dateStr) {
+  return getCacheBlockedDates().includes(dateStr);
+}
+
 export function getBookableDates() {
   const cached = getCacheBookableDates();
-  return cached.length ? cached : getCalendarDates();
+  return cached.length ? cached : getCalendarDates(getCacheBlockedDates());
 }
 
 export function getUserDeskBookingOnDate(userId, dateStr) {

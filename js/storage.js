@@ -6,6 +6,7 @@ const cache = {
   maintenance: [],
   availability: {},
   bookableDates: [],
+  blockedDates: [],
   members: [],
   metrics: null,
   juneQuota: [],
@@ -17,6 +18,7 @@ export function resetCache() {
   cache.maintenance = [];
   cache.availability = {};
   cache.bookableDates = [];
+  cache.blockedDates = [];
   cache.members = [];
   cache.metrics = null;
   cache.juneQuota = [];
@@ -70,6 +72,14 @@ export function getCacheBookableDates() {
 
 export function setCacheBookableDates(dates) {
   cache.bookableDates = dates;
+}
+
+export function getCacheBlockedDates() {
+  return cache.blockedDates;
+}
+
+export function setCacheBlockedDates(dates) {
+  cache.blockedDates = dates;
 }
 
 export function getCacheMembers() {

@@ -46,8 +46,6 @@ export const BOOKING_RULES = {
   juneYear: 2026,
   juneMaxDays: 10,
   conferenceMaxPerMonth: 1,
-  /** ISO dates (YYYY-MM-DD) closed for bookings */
-  blockedDates: ['2026-06-25'],
 };
 
 export const TERMS_AND_CONDITIONS = `

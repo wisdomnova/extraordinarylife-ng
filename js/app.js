@@ -80,7 +80,7 @@ function render(forcedPage = null) {
       break;
     case 'admin':
       content = renderAdminDashboard();
-      bind = (root) => bindAdminDashboard(root);
+      bind = (root) => bindAdminDashboard(root, navigate);
       break;
     case 'scanner':
       content = renderScannerView();

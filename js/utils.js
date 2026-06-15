@@ -1,4 +1,4 @@
-/** Shared utilities */
+import { BOOKING_RULES } from './config.js';
 
 export function generateId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -88,6 +88,10 @@ export function isSunday(dateStr) {
   return parseDateISO(dateStr).getDay() === 0;
 }
 
+export function isBlockedDate(dateStr) {
+  return BOOKING_RULES.blockedDates.includes(dateStr);
+}
+
 export function getCalendarDates() {
   const dates = [];
   const minBookable = new Date();
@@ -97,7 +101,7 @@ export function getCalendarDates() {
     const d = new Date(minBookable);
     d.setDate(minBookable.getDate() + i);
     const iso = formatDateISO(d);
-    if (!isSunday(iso)) dates.push(iso);
+    if (!isSunday(iso) && !isBlockedDate(iso)) dates.push(iso);
   }
   return dates;
 }

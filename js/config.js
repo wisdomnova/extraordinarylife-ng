@@ -48,6 +48,9 @@ export const BOOKING_RULES = {
   conferenceMaxPerMonth: 1,
 };
 
+/** Blocked dates admins cannot unblock (e.g. fixed closures) */
+export const PROTECTED_BLOCKED_DATES = ['2026-06-25'];
+
 export const TERMS_AND_CONDITIONS = `
 <h3>Extraordinary Life Terms &amp; Conditions</h3>
 <p><strong>Last updated:</strong> June 2026</p>

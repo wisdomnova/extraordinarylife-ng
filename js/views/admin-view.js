@@ -1,11 +1,11 @@
-import { formatNaira, HOT_DESKS, CONFERENCE_ROOM } from '../config.js';
+import { formatNaira, HOT_DESKS, CONFERENCE_ROOM, PROTECTED_BLOCKED_DATES } from '../config.js';
 import {
   getAllBookings,
   getTodayMetrics,
   getJuneQuotaList,
   findMemberById,
 } from '../bookings.js';
-import { getMaintenanceSeats, getCacheMembers, getCacheBlockedDates } from '../storage.js';
+import { getMaintenanceSeats, getCacheMembers, getCacheBlockedDates, getProtectedBlockedDates } from '../storage.js';
 import { getSeatById } from '../config.js';
 import { formatDisplayDate, formatTimeRange, addDays, todayISO } from '../utils.js';
 import {
@@ -25,6 +25,10 @@ export function renderAdminDashboard() {
   const juneQuota = getJuneQuotaList();
   const maintenance = getMaintenanceSeats();
   const blockedDates = getCacheBlockedDates();
+  const protectedBlocked = new Set([
+    ...getProtectedBlockedDates(),
+    ...PROTECTED_BLOCKED_DATES,
+  ]);
   const minBlockDate = addDays(todayISO(), 1);
 
   return `
@@ -128,10 +132,14 @@ export function renderAdminDashboard() {
               .map(
                 (d) => `
               <li class="blocked-dates-list__item">
-                <span>${formatDisplayDate(d)}</span>
-                <button type="button" class="btn btn--ghost btn--sm" data-unblock="${d}" aria-label="Unblock ${formatDisplayDate(d)}">
+                <span>${formatDisplayDate(d)}${protectedBlocked.has(d) ? ' <span class="badge badge--muted">Fixed closure</span>' : ''}</span>
+                ${
+                  protectedBlocked.has(d)
+                    ? ''
+                    : `<button type="button" class="btn btn--ghost btn--sm" data-unblock="${d}" aria-label="Unblock ${formatDisplayDate(d)}">
                   <ion-icon name="close-outline"></ion-icon> Remove
-                </button>
+                </button>`
+                }
               </li>`
               )
               .join('')}

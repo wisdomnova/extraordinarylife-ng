@@ -8,7 +8,7 @@ import {
   setCacheMaintenance,
   setCacheBookableDates,
   setCacheBlockedDates,
-  getCacheBlockedDates,
+  getProtectedBlockedDates,
   setCacheAvailability,
   setCacheMembers,
   setCacheMetrics,
@@ -37,7 +37,7 @@ export async function syncFromApi() {
     setCacheBookings(bookingsRes.bookings);
     setCacheMaintenance(maintRes.seats);
     setCacheBookableDates(datesRes.dates);
-    setCacheBlockedDates(blockedRes.dates);
+    setCacheBlockedDates(blockedRes.dates, blockedRes.protected || []);
 
     if (user.role === 'admin') {
       const [metricsRes, membersRes, quotaRes] = await Promise.all([
@@ -86,7 +86,7 @@ export async function addBlockedDate(date) {
     method: 'POST',
     body: JSON.stringify({ date }),
   });
-  setCacheBlockedDates(res.dates);
+  setCacheBlockedDates(res.dates, res.protected || getProtectedBlockedDates());
   clearAvailabilityCache();
   await refreshBookableDates();
   return res.dates;
@@ -96,7 +96,7 @@ export async function removeBlockedDate(date) {
   const res = await api(`/api/blocked-dates/${encodeURIComponent(date)}`, {
     method: 'DELETE',
   });
-  setCacheBlockedDates(res.dates);
+  setCacheBlockedDates(res.dates, res.protected || getProtectedBlockedDates());
   clearAvailabilityCache();
   await refreshBookableDates();
   return res.dates;

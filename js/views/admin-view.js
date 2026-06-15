@@ -2,7 +2,7 @@ import { formatNaira, HOT_DESKS, CONFERENCE_ROOM, PROTECTED_BLOCKED_DATES } from
 import { getTodayMetrics } from '../bookings.js';
 import { getMaintenanceSeats, getCacheBlockedDates, getProtectedBlockedDates } from '../storage.js';
 import { getSeatById } from '../config.js';
-import { formatDisplayDate, formatTimeRange, addDays, todayISO } from '../utils.js';
+import { formatDisplayDate, formatTimeRange, addDays, todayISO, formatMemberSince } from '../utils.js';
 import {
   updateMaintenanceSeats,
   addBlockedDate,
@@ -11,9 +11,11 @@ import {
   checkInBooking,
   fetchAdminBookings,
   fetchAdminMembers,
+  fetchAdminMember,
   fetchAdminJuneQuota,
   syncFromApi,
 } from '../data.js';
+import { openModal } from '../components/modal.js';
 import { renderPagination, bindPagination } from '../components/pagination.js';
 import { startScanner, stopScanner } from '../components/scanner.js';
 import { toast } from '../components/toast.js';
@@ -184,26 +186,76 @@ function renderMembersGrid(members) {
   if (!members.length) {
     return '<p class="text-muted empty-state">No members registered yet.</p>';
   }
-  return `<div class="user-grid">
+  return `<div class="user-grid user-grid--compact">
     ${members
-      .map((u) => {
-        const photo = u.photo
-          ? `<img src="${u.photo}" class="user-card__photo" alt="" loading="lazy" />`
-          : `<div class="user-card__photo user-card__photo--ph"><ion-icon name="person"></ion-icon></div>`;
-        return `
-      <div class="user-card">
-        ${photo}
-        <div>
+      .map(
+        (u) => `
+      <div class="user-card user-card--compact">
+        <div class="user-card__body">
           <strong>${u.fullName}</strong>
           <p class="text-muted">${u.email}</p>
           <p class="text-muted">${u.phone}</p>
           <p class="text-muted">${u.organisation || ''}</p>
           <span class="badge badge--primary">${u.bookingCount ?? 0} bookings</span>
+          <button type="button" class="btn btn--ghost btn--sm user-card__view" data-view-member="${u.id}">
+            <ion-icon name="person-outline"></ion-icon> View profile
+          </button>
         </div>
-      </div>`;
-      })
+      </div>`
+      )
       .join('')}
   </div>`;
+}
+
+function renderMemberProfileBody(member) {
+  const since = formatMemberSince(member.createdAt);
+  const photo = member.photo
+    ? `<img src="${member.photo}" class="member-profile__photo" alt="${member.fullName}" />`
+    : `<div class="member-profile__photo member-profile__photo--ph"><ion-icon name="person"></ion-icon></div>`;
+
+  return `
+    <div class="member-profile">
+      ${photo}
+      <div class="member-profile__details">
+        <h3 class="member-profile__name">${member.fullName}</h3>
+        <p class="text-muted">${member.organisation || '—'}</p>
+        <dl class="member-profile__meta">
+          <div><dt>Email</dt><dd>${member.email}</dd></div>
+          <div><dt>Phone</dt><dd>${member.phone}</dd></div>
+          ${since ? `<div><dt>Member since</dt><dd>${since}</dd></div>` : ''}
+          <div><dt>Total bookings</dt><dd>${member.bookingCount ?? 0}</dd></div>
+        </dl>
+      </div>
+    </div>
+  `;
+}
+
+async function showMemberProfile(memberId) {
+  const { close, el } = openModal({
+    title: 'Member profile',
+    wide: true,
+    bodyHtml: '<p class="text-muted admin-loading">Loading profile…</p>',
+    footerHtml: '<button type="button" class="btn btn--ghost" id="member-profile-close">Close</button>',
+  });
+
+  el.querySelector('#member-profile-close')?.addEventListener('click', close);
+
+  try {
+    const { member } = await fetchAdminMember(memberId);
+    const body = el.querySelector('.modal__body');
+    if (body) body.innerHTML = renderMemberProfileBody(member);
+  } catch (err) {
+    const body = el.querySelector('.modal__body');
+    if (body) {
+      body.innerHTML = `<p class="text-muted">${err.message || 'Could not load profile.'}</p>`;
+    }
+  }
+}
+
+function bindMemberViewButtons(container) {
+  container.querySelectorAll('[data-view-member]').forEach((btn) => {
+    btn.addEventListener('click', () => showMemberProfile(btn.dataset.viewMember));
+  });
 }
 
 function renderQuotaTable(quota) {
@@ -269,6 +321,7 @@ async function loadAdminMembersPage(root, page) {
     bindPagination(pag, {
       onPageChange: (p) => loadAdminMembersPage(root, p),
     });
+    bindMemberViewButtons(wrap);
   } catch (err) {
     wrap.innerHTML = `<p class="text-muted">Could not load members. ${err.message || ''}</p>`;
   }

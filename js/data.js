@@ -75,6 +75,10 @@ export async function fetchAdminMembers(page = 1) {
   return api(`/api/admin/members?page=${page}&limit=12`);
 }
 
+export async function fetchAdminMember(id) {
+  return api(`/api/admin/members/${id}`);
+}
+
 export async function fetchAdminJuneQuota(page = 1) {
   return api(`/api/admin/june-quota?page=${page}&limit=15`);
 }

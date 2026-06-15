@@ -190,6 +190,11 @@
   white-space: nowrap;
 }
 
+.user-card--compact .user-card__body .badge {
+  width: fit-content;
+  align-self: flex-start;
+}
+
 .user-card__view {
   margin-top: 8px;
   align-self: flex-start;
